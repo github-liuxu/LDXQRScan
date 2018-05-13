@@ -19,6 +19,7 @@
     BOOL upOrdown;
     NSTimer * timer;
     CAShapeLayer *cropLayer;
+    UIButton *flashButton;
 }
 @property (strong,nonatomic)AVCaptureDevice * device;
 @property (strong,nonatomic)AVCaptureDeviceInput * input;
@@ -63,6 +64,14 @@
     
     timer = [NSTimer scheduledTimerWithTimeInterval:.02 target:self selector:@selector(animation1) userInfo:nil repeats:YES];
     
+    
+    flashButton = [UIButton buttonWithType:UIButtonTypeCustom];
+    flashButton.frame = CGRectMake(0, 0, 40, 40);
+    flashButton.center = CGPointMake(self.view.center.x, imageView.frame.origin.y+imageView.frame.size.height + 30);
+    [flashButton setImage:[UIImage imageNamed:@"lightSelect"] forState:UIControlStateNormal];
+    [flashButton setImage:[UIImage imageNamed:@"lightNormal"] forState:UIControlStateSelected];
+    [self.view addSubview:flashButton];
+    [flashButton addTarget:self action:@selector(turnTorchOn:) forControlEvents:UIControlEventTouchUpInside];
 
 }
 -(void)viewWillAppear:(BOOL)animated{
@@ -208,6 +217,29 @@
     } else {
         NSLog(@"无扫描信息");
         return;
+    }
+    
+}
+
+- (void)turnTorchOn:(UIButton*)button {
+    Class captureDeviceClass = NSClassFromString(@"AVCaptureDevice");
+    if (captureDeviceClass != nil) {
+        AVCaptureDevice *device = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo];
+        
+        button.selected = !button.selected;
+        if ([device hasTorch] && [device hasFlash]){
+            
+            [device lockForConfiguration:nil];
+            if (button.selected) {
+                [device setTorchMode:AVCaptureTorchModeOn];
+                [device setFlashMode:AVCaptureFlashModeOn];
+                
+            } else {
+                [device setTorchMode:AVCaptureTorchModeOff];
+                [device setFlashMode:AVCaptureFlashModeOff];
+            }
+            [device unlockForConfiguration];
+        }
     }
     
 }
